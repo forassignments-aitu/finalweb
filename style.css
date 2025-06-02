@@ -1,0 +1,114 @@
+:root {
+    --bg-primary: #f0f8ff;
+    --text-primary: #1a2a3a;
+    --card-bg: #ffffff;
+    --border-color: #d1e0e7;
+    --header-bg: #008080;
+    --footer-bg: #1a3a4a;
+    --accent: #ff7f50;
+    --accent-light: #ffa07a;
+    --badge-bg: #4682b4;
+    --hover-shadow: rgba(70, 130, 180, 0.2);
+}
+
+[data-theme="dark"] {
+    --bg-primary: #0a1929;
+    --text-primary: #f5f5dc;
+    --card-bg: #1a2a3a;
+    --border-color: #2d4a5a;
+    --header-bg: #006666;
+    --footer-bg: #0d2b3d;
+    --accent: #ff6347;
+    --accent-light: #ff8c69;
+    --badge-bg: #4169e1;
+    --hover-shadow: rgba(65, 105, 225, 0.3);
+}
+
+body {
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    transition: background-color 0.3s, color 0.3s;
+}
+
+header {
+    background-color: var(--header-bg) !important;
+}
+
+footer {
+    background-color: var(--footer-bg) !important;
+}
+
+.card {
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    transition: transform 0.2s;
+    margin-bottom: 20px;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px var(--hover-shadow);
+}
+
+.article-card .card-img-top {
+    height: 200px;
+    object-fit: cover;
+}
+
+.reading-time {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: var(--accent);
+    color: white;
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+}
+
+.category-badge {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background: var(--badge-bg);
+    color: white;
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    z-index: 1;
+}
+
+.badge.bg-info {
+    background-color: var(--accent-light) !important;
+    color: #fff;
+}
+
+.form-check-input:checked {
+    background-color: var(--accent);
+    border-color: var(--accent);
+}
+
+.sidebar .card-header {
+    background-color: var(--badge-bg);
+    color: white;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.article-card {
+    animation: fadeIn 0.5s ease-out;
+}
+
+@media (max-width: 768px) {
+    .sorting {
+        width: 100%;
+        margin-top: 15px;
+    }
+
+    .d-flex {
+        flex-direction: column;
+    }
+}
