@@ -1,132 +1,85 @@
-document.addEventListener('DOMContentLoaded', function() {
-    let articles = [];
-    const articlesContainer = document.getElementById('articles-container');
-    const mostPopularContainer = document.getElementById('most-popular');
-    const sortSelect = document.getElementById('sortSelect');
-    const themeToggle = document.getElementById('themeToggle');
-    const totalArticlesEl = document.getElementById('total-articles');
-    const totalViewsEl = document.getElementById('total-views');
+// Load articles from localStorage or JSON
+let articles = JSON.parse(localStorage.getItem('articles')) || window.articlesData.articles;
+localStorage.setItem('articles', JSON.stringify(articles));
 
-    // json download
-    fetch('articles.json')
-        .then(response => response.json())
-        .then(data => {
-            articles = data.articles;
-            renderArticles(articles);
-            updateMostPopular();
-            updateStats();
-            populateCategories();
-        })
-        .catch(error => console.error('Error loading articles:', error));
+// Theme Toggle
+const themeToggle = document.getElementById('themeToggle');
+themeToggle.addEventListener('click', () => {
+    document.body.dataset.theme = document.body.dataset.theme === 'dark' ? 'light' : 'dark';
+});
 
-    // rendering of articles
-    function renderArticles(articlesToRender) {
-        articlesContainer.innerHTML = '';
+// Calculate reading time (200 words per minute)
+const calculateReadingTime = (wordCount) => {
+    const wordsPerMinute = 200;
+    return Math.ceil(wordCount / wordsPerMinute);
+};
 
-        articlesToRender.forEach(article => {
-            const readingTime = Math.ceil(article.wordCount / 200);
+// Display articles
+const articleContainer = document.getElementById('articleContainer');
+const mostPopularArticle = document.getElementById('mostPopularArticle');
+const sortSelect = document.getElementById('sortSelect');
 
-            const articleCard = `
-                <div class="col-md-6 mb-4">
-                    <div class="card article-card h-100">
-                        <div class="position-relative">
-                            <img src="https://picsum.photos/seed/${article.id}/600/400" class="card-img-top" alt="${article.title}">
-                            <span class="badge bg-primary category-badge">${article.category}</span>
-                            <span class="reading-time">${readingTime} min read</span>
-                        </div>
-                        <div class="card-body">
-                            <h5 class="card-title">${article.title}</h5>
-                            <p class="card-text">${article.content.substring(0, 100)}...</p>
-                            <div class="d-flex justify-content-between align-items-center">
-                                <small class="text-muted">${formatDate(article.date)}</small>
-                                <span class="badge bg-info">👁️ ${article.views}</span>
-                            </div>
-                        </div>
-                    </div>
+const displayArticles = () => {
+    articleContainer.innerHTML = '';
+    // Sort articles
+    const sortedArticles = [...articles];
+    if (sortSelect.value === 'views') {
+        sortedArticles.sort((a, b) => b.views - a.views);
+    } else {
+        sortedArticles.sort((a, b) => new Date(b.date) - new Date(a.date));
+    }
+
+    // Display most popular article
+    const mostPopular = sortedArticles[0];
+    mostPopularArticle.innerHTML = `
+        <h5>${mostPopular.title}</h5>
+        <p class="article-meta">${mostPopular.date} | ${mostPopular.category} | ${mostPopular.views} views | ${calculateReadingTime(mostPopular.wordCount)} min read</p>
+        <p>${mostPopular.content.substring(0, 100)}...</p>
+        <button class="btn btn-primary read-more" data-id="${mostPopular.id}">Read More</button>
+    `;
+
+    // Display article cards
+    sortedArticles.forEach(article => {
+        const card = document.createElement('div');
+        card.className = 'col-md-4 mb-4';
+        card.innerHTML = `
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">${article.title}</h5>
+                    <p class="article-meta">${article.date} | ${article.category} | ${article.views} views | ${calculateReadingTime(article.wordCount)} min read</p>
+                    <p class="card-text">${article.content.substring(0, 100)}...</p>
+                    <button class="btn btn-primary read-more" data-id="${article.id}">Read More</button>
                 </div>
-            `;
-
-            articlesContainer.innerHTML += articleCard;
-        });
-    }
-
-    // formating of date
-    function formatDate(dateString) {
-        const options = { year: 'numeric', month: 'long', day: 'numeric' };
-        return new Date(dateString).toLocaleDateString(undefined, options);
-    }
-
-    // update the most popular
-    function updateMostPopular() {
-        if (articles.length === 0) return;
-
-        const popularArticle = [...articles].sort((a, b) => b.views - a.views)[0];
-        const readingTime = Math.ceil(popularArticle.wordCount / 200);
-
-        mostPopularContainer.innerHTML = `
-            <h6>${popularArticle.title}</h6>
-            <p class="mb-1"><small>${formatDate(popularArticle.date)}</small></p>
-            <p class="text-truncate">${popularArticle.content.substring(0, 80)}...</p>
-            <div class="d-flex justify-content-between">
-                <span class="badge bg-primary">${popularArticle.category}</span>
-                <span>👁️ ${popularArticle.views} | ⏱️ ${readingTime} min</span>
             </div>
         `;
-    }
+        articleContainer.appendChild(card);
+    });
 
-    // update stats
-    function updateStats() {
-        totalArticlesEl.textContent = articles.length;
-
-        const totalViews = articles.reduce((sum, article) => sum + article.views, 0);
-        totalViewsEl.textContent = totalViews;
-    }
-
-    // fulling categories
-    function populateCategories() {
-        const categoriesMenu = document.getElementById('categories-menu');
-        const categories = [...new Set(articles.map(article => article.category))];
-
-        categories.forEach(category => {
-            const li = document.createElement('li');
-            li.innerHTML = `<a class="dropdown-item" href="#">${category}</a>`;
-            categoriesMenu.appendChild(li);
+    // Add event listeners to read more buttons
+    document.querySelectorAll('.read-more').forEach(button => {
+        button.addEventListener('click', (e) => {
+            const articleId = parseInt(e.target.dataset.id);
+            const article = articles.find(a => a.id === articleId);
+            if (article) {
+                // Increment views without refreshing
+                article.views += 1;
+                localStorage.setItem('articles', JSON.stringify(articles));
+                // Update modal content
+                document.getElementById('modalTitle').textContent = article.title;
+                document.getElementById('modalBody').textContent = article.content;
+                document.getElementById('modalMeta').textContent = `${article.date} | ${article.category} | ${article.views} views | ${calculateReadingTime(article.wordCount)} min read`;
+                // Show modal
+                const modal = new bootstrap.Modal(document.getElementById('articleModal'));
+                modal.show();
+                // Refresh display to update views
+                displayArticles();
+            }
         });
-    }
-
-    // sorts articles
-    sortSelect.addEventListener('change', function() {
-        const sortedArticles = [...articles];
-
-        if (this.value === 'date') {
-            sortedArticles.sort((a, b) =>
-                new Date(b.date) - new Date(a.date)
-            );
-        } else if (this.value === 'popularity') {
-            sortedArticles.sort((a, b) => b.views - a.views);
-        }
-
-        renderArticles(sortedArticles);
     });
+};
 
-    //switch theme
-    themeToggle.addEventListener('change', function() {
-        const currentTheme = document.documentElement.getAttribute('data-theme');
-        const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+// Sort articles when selection changes
+sortSelect.addEventListener('change', displayArticles);
 
-        document.documentElement.setAttribute('data-theme', newTheme);
-        localStorage.setItem('theme', newTheme);
-    });
-
-    // checking the saved theme
-    function loadSavedTheme() {
-        const savedTheme = localStorage.getItem('theme');
-        if (savedTheme) {
-            document.documentElement.setAttribute('data-theme', savedTheme);
-            themeToggle.checked = savedTheme === 'dark';
-        }
-    }
-
-    // initialization
-    loadSavedTheme();
-});
+// Initial display
+displayArticles();
